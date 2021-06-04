@@ -1,8 +1,9 @@
 name: colorMSAwithSSE
 channels:
+- default
 - salilab
 - conda-forge
-dependancies:
-  - argparse
-  - biopython
-  - dssp
+dependencies:
+- matplotlib
+- biopython
+- dssp

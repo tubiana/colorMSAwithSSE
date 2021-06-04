@@ -128,12 +128,45 @@ def parseArg():
     arguments.add_argument('-o', '--output', help="output file", default="out.png")
     arguments.add_argument('-sort', '--sort', help="Sort indexes (Y/N) (A->Z)", default="Y")
     arguments.add_argument('-p', '--tickPosition', help="Put the position in the alignment every {tickPosition} ", default=10, type=int)
+    arguments.add_argument('-c','--color', help="Color for the secondary structure in this order 'GAP,COIL,HELICES,BSHEET'. "
+                           "default is 'white, bisque, red, yellow'. You can use color name (See https://matplotlib.org/stable/gallery/color/named_colors.html) or HEX code", default="white,bisque,red,yellow")
+    arguments.add_argument('-a', '--alpha', help="Transparency of the color background", default=0.6, type=float)
+
+
 
 
     args = vars(arguments.parse_args())
     if args["sort"] == "Y":
         args["sort"]=True
     return (args)
+
+
+def read_alignment(path:str):
+    """
+    Read an alignment from a filepath and define it's type.
+    :param path: Path of the alignment file
+    :return: Biopython Alignment object
+    """
+    alitype = {'fa':'fasta',
+               'faa':'fasta',
+               'fasta':'fasta',
+               'clw':'clustal',
+               'aln':'clustal',
+               'clustal':'clustal',
+               'phy':'phylip',
+               'phylip':'phylip',
+               }
+
+    extension = path.split('.')[-1]
+    if extension not in alitype:
+        print("alignment Extension not in the supported list for now")
+        print("Please convert your file into fasta forma (with 'fa','faa' or 'fasta' extension)")
+        print("or open a ticket on this github repository https://github.com/tubiana/colorMSAwithSSE")
+        sys.exit(1)
+
+    return AlignIO.read(path, alitype[extension])
+    
+    return 
 
 
 def create_ali_list(alignment:Bio.Align.MultipleSeqAlignment, structures_folder:str, sort=True):
@@ -278,7 +311,7 @@ def prepare_data(seqlist:list, chunksize:int, interspace:int, tickPosition=10):
             data_positions,)
 
 
-def generate_graph(data_matrix:np.array, labels_lines:list, data_annot:list, data_positions:list, output:str):
+def generate_graph(data_matrix:np.array, labels_lines:list, data_annot:list, data_positions:list, output:str, color:list, alpha:float):
     """
     Generate the figure
     :param datamatrix: Matrix with all SSE numbers
@@ -286,6 +319,8 @@ def generate_graph(data_matrix:np.array, labels_lines:list, data_annot:list, dat
     :param data_annot: Matrix with all annotations (sequences)
     :param data_positions: Matrix with all position numbers
     :param output: output filename
+    :param colors: colors list in this order Gap, Coil, Helices, BSheet
+    :param alpha: Transparency
     :return: None
     """
     WIDTH = data_matrix.shape[1]
@@ -293,20 +328,16 @@ def generate_graph(data_matrix:np.array, labels_lines:list, data_annot:list, dat
 
     fig, ax = plt.subplots(figsize=(WIDTH/3, WIDTH/3), facecolor='w')
 
-    col = ['white',  # Gaps and nothing (0)
-           'bisque',  # Coils (1)
-           'red',  # a-helices (2)
-           'yellow',  # Bsheet (3)
-           ]
-    cmap = colors.ListedColormap(col)
-    boundaries = list(range(len(col) + 1))
+
+    cmap = colors.ListedColormap(color)
+    boundaries = list(range(len(color) + 1))
     norm = colors.BoundaryNorm(boundaries, cmap.N, clip=True)
 
     plt.imshow(data_matrix,
                interpolation=None,
                cmap=cmap,
                norm=norm,
-               alpha=0.7,
+               alpha=alpha,
                )
 
     #Add labels
@@ -354,8 +385,10 @@ def engine():
     output = args["output"]
     tickPosition = args["tickPosition"]
     sort = args["sort"]
+    color=[x.strip() for x in args["color"].split(',')]
+    alpha = args["alpha"]
 
-    alignment = AlignIO.read(alignmentfile, "fasta")
+    alignment = read_alignment(alignmentfile)
     seqlist = create_ali_list(alignment, structures_folder, sort)
 
     (data_matrix,
@@ -368,7 +401,9 @@ def engine():
                    labels_lines=labels_lines,
                    data_annot=data_annot,
                    data_positions=data_positions,
-                   output=output)
+                   output=output,
+                   color=color,
+                   alpha=alpha)
 
     print(f"> Done. Check {output}")
 

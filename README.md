@@ -7,10 +7,28 @@ Generate an image from a multiple sequence alignment (MSA) colored by the second
 1. You will need a fasta where the header countain the PDB filename
 2. And all the structures used
 
-## Example
+### formats
+For now only those file extension and associated formats are supported:
+- `.fa` -> fasta
+- `.faa` -> fasta
+- `.fasta` -> fasta
+- `.clw` -> clustal
+- `.aln` -> clustal
+- `.clustal` -> clustal
+- `.phy` -> phylip
+- `.phylip` -> phylip
+
+### Coloring
+You can change the color of the Gaps, Coil, ɑ-helix and β-sheet with the argument `-c`.  
+Use the HEX code or the matplotlib color name here (https://matplotlib.org/stable/gallery/color/named_colors.html).  
+The color order should follow this : GAP, COIL, HELICES, BSHEET.  
+Example: `-c "white, bisque, red, yellow"`
+
+
+### Example
 You can run an example within the test folder.
   
-`python ../colorMSAwithSSE/colorMSAwithSSE.py -f SH2.fasta -s structures/ -o SH2.png -w 60`
+`python ../colorMSAwithSSE/colorMSAwithSSE.py -f SH2.fasta -s structures/ -o SH2.png -w 60 -c 'white, bisque, red, yellow' -a 0.6`
 
 **Output example**
 ![outputexample](tesT/SH2.png) 
@@ -19,7 +37,7 @@ You can run an example within the test folder.
 ## help
 
 ```
-USAGE: python colorMSAwithSSE.py -f file.fasta -t structuresfolder -o alignment.png
+usage: python colorMSAwithSSE.py -f file.fasta -t structuresfolder -o alignment.png
 
 This program is made to generate a picture (SVG/PNG/PDF) of a multiple
 sequence alignement with secondary structure element coloration
@@ -40,15 +58,22 @@ optional arguments:
                         Sort indexes (Y/N) (A->Z)
   -p TICKPOSITION, --tickPosition TICKPOSITION
                         Put the position in the alignment every {tickPosition}
-
+  -c COLOR, --color COLOR
+                        Color for the secondary structure in this order
+                        'GAP,COIL,HELICES,BSHEET'. default is 'white, bisque,
+                        red, yellow'. You can use color name (See https://matp
+                        lotlib.org/stable/gallery/color/named_colors.html) or
+                        HEX code
+  -a ALPHA, --alpha ALPHA
+                        Transparency of the color background
 ```
 ## Dependancies:
 - Biopython
-- Matplotlib
+- matplotlib
 - DSSP
 - argparse
 
-You can the dependancies with `conda install -c conda-forge -c salilab dssp biopython`
+You can the dependancies with `conda install -c conda-forge -c salilab dssp biopython matplotlib`
 
 
 ## Support
