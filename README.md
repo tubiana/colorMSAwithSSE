@@ -31,7 +31,7 @@ You can run an example within the test folder.
 `python ../colorMSAwithSSE/colorMSAwithSSE.py -f SH2.fasta -s structures/ -o SH2.png -w 60 -c 'white, bisque, red, yellow' -a 0.6`
 
 **Output example**
-![outputexample](tesT/SH2.png) 
+![outputexample](test/SH2.png) 
 
 
 ## help
