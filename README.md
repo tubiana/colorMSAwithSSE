@@ -2,7 +2,7 @@
 Generate an image from a multiple sequence alignment (MSA) colored by the secondary structures elements (SSE)
 
 ## Usage
-**Please note that you need a strick match between the sequences in the fasta faile AND your structrures files**. It will not work if there is a mismatch.
+**Please note that you need a strict match between the sequences in the fasta file AND your structrure files**. It will not work if there is a mismatch.
 
 1. You will need a fasta where the header countain the PDB filename
 2. And all the structures used
