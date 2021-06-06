@@ -93,6 +93,18 @@ class Sequence():
         self.sse_full = "".join([dssp[x][2] for x in dssp.keys()])
         self.sse = "".join([simplify_SS(dssp[x][2]) for x in dssp.keys()])
 
+        lenseq = len(self.non_empty_position)
+        lendssp = len(self.sse)
+
+        if lenseq != lendssp:
+            print(f"ERROR, secondary structures {lenseq} and sequence {lendssp} don't have the same size.")
+            print(f" File: {self.pdbpath}")
+            print(f"This could be due to: ")
+            print(f" - mistmatch between the sequence and secondary structures")
+            print(f" - DSSP that ignored some CTER or NTER residues (try DSSP on this file to check)")
+            print(f" - Duplicated residues in your sequence.")
+            sys.exit(1)
+            
         sse_aligned = ["-"] * len(self.alignment)
         for i in range(len(self.non_empty_position)):
             sse_aligned[self.non_empty_position[i]] = self.sse[i]
