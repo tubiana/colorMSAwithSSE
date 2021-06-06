@@ -24,11 +24,14 @@ Use the HEX code or the matplotlib color name here (https://matplotlib.org/stabl
 The color order should follow this : GAP, COIL, HELICES, BSHEET.  
 Example: `-c "white, bisque, red, yellow"`
 
+### Font
+You can change the font style with the parameter `-fs`. It can be with Serif (`serif`) or sans-serif (`sans`)
+
 
 ### Example
 You can run an example within the test folder.
   
-`python ../colorMSAwithSSE/colorMSAwithSSE.py -f SH2.fasta -s structures/ -o SH2.png -w 60 -c 'white, bisque, red, yellow' -a 0.6`
+`python ../colorMSAwithSSE/colorMSAwithSSE.py -f SH2.fasta -s structures/ -o SH2.png -w 60 -c 'white, bisque, red, yellow' -a 0.6 -ft sans`
 
 **Output example**
 ![outputexample](test/SH2.png) 
@@ -52,6 +55,8 @@ optional arguments:
                         picture one 1 line
   -i INTERSPACE, --interspace INTERSPACE
                         interspace between two lines
+  -fs FONTSTYLE, --fontstyle FONTSTYLE
+                        fontstyle (serif/sans). Default: serif.
   -o OUTPUT, --output OUTPUT
                         output file
   -sort SORT, --sort SORT

@@ -104,7 +104,7 @@ class Sequence():
             print(f" - DSSP that ignored some CTER or NTER residues (try DSSP on this file to check)")
             print(f" - Duplicated residues in your sequence.")
             sys.exit(1)
-            
+
         sse_aligned = ["-"] * len(self.alignment)
         for i in range(len(self.non_empty_position)):
             sse_aligned[self.non_empty_position[i]] = self.sse[i]
@@ -137,6 +137,7 @@ def parseArg():
     arguments.add_argument('-s', '--structures', help="structures FOLDER", required=True)
     arguments.add_argument('-w', '--linewidth', help="line width. Default = 50, choose 0 if you want the picture one 1 line", default=50, type=int)
     arguments.add_argument('-i', '--interspace', help="interspace between two lines", default=2, type=int)
+    arguments.add_argument('-fs', '--fontstyle', help="fontstyle (serif/sans). Default: serif.", default="serif")
     arguments.add_argument('-o', '--output', help="output file", default="out.png")
     arguments.add_argument('-sort', '--sort', help="Sort indexes (Y/N) (A->Z)", default="Y")
     arguments.add_argument('-p', '--tickPosition', help="Put the position in the alignment every {tickPosition} ", default=10, type=int)
@@ -323,7 +324,7 @@ def prepare_data(seqlist:list, chunksize:int, interspace:int, tickPosition=10):
             data_positions,)
 
 
-def generate_graph(data_matrix:np.array, labels_lines:list, data_annot:list, data_positions:list, output:str, color:list, alpha:float):
+def generate_graph(data_matrix:np.array, labels_lines:list, data_annot:list, data_positions:list, output:str, color:list, alpha:float, fontstyle:str):
     """
     Generate the figure
     :param datamatrix: Matrix with all SSE numbers
@@ -333,8 +334,15 @@ def generate_graph(data_matrix:np.array, labels_lines:list, data_annot:list, dat
     :param output: output filename
     :param colors: colors list in this order Gap, Coil, Helices, BSheet
     :param alpha: Transparency
+    :param fontstyle: font style (serif or sans-serif)
     :return: None
     """
+
+    if fontstyle == "serif":
+        plt.rcParams["font.family"] = "DejaVu Serif"
+    else:
+        plt.rcParams["font.family"] = "DejaVu Sans"
+
     WIDTH = data_matrix.shape[1]
     NLINES = data_matrix.shape[0]
 
@@ -396,6 +404,7 @@ def engine():
     interspace = args["interspace"]
     output = args["output"]
     tickPosition = args["tickPosition"]
+    fontstyle=args["fontstyle"]
     sort = args["sort"]
     color=[x.strip() for x in args["color"].split(',')]
     alpha = args["alpha"]
@@ -415,7 +424,8 @@ def engine():
                    data_positions=data_positions,
                    output=output,
                    color=color,
-                   alpha=alpha)
+                   alpha=alpha,
+                   fontstyle=fontstyle)
 
     print(f"> Done. Check {output}")
 
