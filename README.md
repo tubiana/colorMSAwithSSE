@@ -27,7 +27,6 @@ Example: `-c "white, bisque, red, yellow"`
 ### Font
 You can change the font style with the parameter `-fs`. It can be with Serif (`serif`) or sans-serif (`sans`)
 
-
 ### Example
 You can run an example within the test folder.
   
@@ -61,6 +60,10 @@ optional arguments:
                         output file
   -sort SORT, --sort SORT
                         Sort indexes (Y/N) (A->Z)
+  -r RANGE, --range RANGE
+                        output range of the alignment. Example '30:70'.
+                        default='all'
+
   -p TICKPOSITION, --tickPosition TICKPOSITION
                         Put the position in the alignment every {tickPosition}
   -c COLOR, --color COLOR

@@ -21,7 +21,7 @@ class Sequence():
         print(f"SSE num =\n{self.sse_num}")
         return ""
 
-    def __init__(self, biopython_ali, structures_folder):
+    def __init__(self, biopython_ali, structures_folder, alirange):
         self.id = biopython_ali.id
         self.structures_folder = structures_folder
 
@@ -31,6 +31,8 @@ class Sequence():
         self.sse = None
         self.sse_ali = None
         self.non_empty_position = []
+        self.strip_start = 0
+        self.alignment_sequence_matching = {}
 
         self.define_position_in_ali()
         self.define_pdbname()
@@ -39,14 +41,21 @@ class Sequence():
         self.add_pdb()
         self.add_sse()
         self.set_sse_as_number()
+        if alirange != 'all':
+            self.strip(alirange)
+
+
 
     def define_position_in_ali(self):
         gap_char = ["_", "-"]
 
+        sequence_position = 0
         for i in range(len(self.alignment)):
             letter = self.alignment[i]
+            self.alignment_sequence_matching[i]=sequence_position
             if letter not in gap_char:
                 self.non_empty_position.append(i)
+                sequence_position+=1
 
     def define_pdbname(self):
         regexCATH = re.compile("([0-9][\w]{3}[A-Z][0-9]{2})")
@@ -117,6 +126,26 @@ class Sequence():
                       "E": 3}
         self.sse_num = [conversion[x] for x in self.sse_aligned]
 
+    def strip(self, alirange):
+        startali = int(alirange.split(':')[0]) -1
+        self.strip_start = startali
+        endali = int(alirange.split(':')[1])
+        if startali > endali:
+            print("ERROR while striping sequence, starting position is higher than ending position")
+            sys.exit(1)
+        startseq = self.alignment_sequence_matching[startali]
+        endseq = self.alignment_sequence_matching[endali]
+
+        self.alignment = self.alignment[startali:endali]
+        self.sse_aligned = self.sse_aligned[startali:endali]
+        self.sse_num = self.sse_num[startali:endali]
+
+        self.sequence = self.sequence[startseq:endseq]
+        self.sse_full = self.sse_full[startseq:endseq]
+        self.sse = self.sse[startseq:endseq]
+
+
+
 
 
 def parseArg():
@@ -140,6 +169,7 @@ def parseArg():
     arguments.add_argument('-fs', '--fontstyle', help="fontstyle (serif/sans). Default: serif.", default="serif")
     arguments.add_argument('-o', '--output', help="output file", default="out.png")
     arguments.add_argument('-sort', '--sort', help="Sort indexes (Y/N) (A->Z)", default="Y")
+    arguments.add_argument('-r', '--range', help="output range of the alignment. Example '30:70'. default='all'", default="all")
     arguments.add_argument('-p', '--tickPosition', help="Put the position in the alignment every {tickPosition} ", default=10, type=int)
     arguments.add_argument('-c','--color', help="Color for the secondary structure in this order 'GAP,COIL,HELICES,BSHEET'. "
                            "default is 'white, bisque, red, yellow'. You can use color name (See https://matplotlib.org/stable/gallery/color/named_colors.html) or HEX code", default="white,bisque,red,yellow")
@@ -182,17 +212,18 @@ def read_alignment(path:str):
     return 
 
 
-def create_ali_list(alignment:Bio.Align.MultipleSeqAlignment, structures_folder:str, sort=True):
+def create_ali_list(alignment:Bio.Align.MultipleSeqAlignment, structures_folder:str, sort=True, alirange='all'):
     """
     Generate a list of alignment objects from the MSA file
     :param alignment: Biopython alignment Object
     :param structures_folder: Folder location where the structures are
     :param sort: Sort labels (pdbid).
+    :param alirange: alignment range.
     :return seqlist: list of Sequence object
     """
     seqlist = []
     for ali in alignment:
-        seqlist.append(Sequence(ali, structures_folder))
+        seqlist.append(Sequence(ali, structures_folder, alirange))
         
     #Order alphabetically the list
     if sort==True:
@@ -214,13 +245,14 @@ def chunk(data:list, N:int):
     return array
 
 
-def prepare_data(seqlist:list, chunksize:int, interspace:int, tickPosition=10):
+def prepare_data(seqlist:list, chunksize:int, interspace:int, tickPosition=10, strip_position=(0,0)):
     """
     Prepare input matrix and labels for the plot.
     :param seqlist: list of sequence objects
     :param chunksize: chunk size
     :param interspace: space between 2 group of sequences
     :param tickPosition: Label the position every X
+    :param strip_position: if the sequence is cut (or 'stripped'), this value will adjust the position on the graph.
     :return datamatrix: Matrix with all SSE numbers
     :return labels_lines: Labels lines
     :return data_annot: Matrix with all annotations (sequences)
@@ -237,8 +269,11 @@ def prepare_data(seqlist:list, chunksize:int, interspace:int, tickPosition=10):
     ALISIZE = len(seqlist[0].alignment)
     chunked_position = [""] * ALISIZE
     for i in range(0, ALISIZE, tickPosition):
-        chunked_position[i] = i + 1
-    chunked_position[-1] = ALISIZE
+        chunked_position[i] = i + 1 + strip_position[0]
+    if strip_position[1] != 0:
+        chunked_position[-1] = strip_position[1]
+    else:
+        chunked_position[-1] = ALISIZE
 
     #2. Chunk lists
     for i in range(len(seqlist)):
@@ -324,7 +359,9 @@ def prepare_data(seqlist:list, chunksize:int, interspace:int, tickPosition=10):
             data_positions,)
 
 
-def generate_graph(data_matrix:np.array, labels_lines:list, data_annot:list, data_positions:list, output:str, color:list, alpha:float, fontstyle:str):
+def generate_graph(data_matrix:np.array, labels_lines:list, data_annot:list,
+                   data_positions:list, output:str, color:list, alpha:float, fontstyle:str,
+                   alirange:str):
     """
     Generate the figure
     :param datamatrix: Matrix with all SSE numbers
@@ -335,6 +372,7 @@ def generate_graph(data_matrix:np.array, labels_lines:list, data_annot:list, dat
     :param colors: colors list in this order Gap, Coil, Helices, BSheet
     :param alpha: Transparency
     :param fontstyle: font style (serif or sans-serif)
+    :param alirange: alignment range in this syntax "XX-YY"
     :return: None
     """
 
@@ -343,8 +381,8 @@ def generate_graph(data_matrix:np.array, labels_lines:list, data_annot:list, dat
     else:
         plt.rcParams["font.family"] = "DejaVu Sans"
 
-    WIDTH = data_matrix.shape[1]
-    NLINES = data_matrix.shape[0]
+    WIDTH = len(data_matrix[0])
+    NLINES = len(data_matrix)
 
     fig, ax = plt.subplots(figsize=(WIDTH/3, WIDTH/3), facecolor='w')
 
@@ -389,6 +427,15 @@ def generate_graph(data_matrix:np.array, labels_lines:list, data_annot:list, dat
     plt.close()
 
 
+def get_alirange(alirange):
+    ali_regex = re.compile("(all)|((\d+):(\d+))")
+    match = ali_regex.math(alirange)
+    if not match:
+        print("Error on alignment range. Please use 'all' for all alignment")
+        print("or 'BEGIN:END' to strip one part of the sequence")
+        sys.exit(1)
+    return alirange
+
 def engine():
     """
     Main function
@@ -406,16 +453,23 @@ def engine():
     tickPosition = args["tickPosition"]
     fontstyle=args["fontstyle"]
     sort = args["sort"]
+    alirange=args["range"]
     color=[x.strip() for x in args["color"].split(',')]
     alpha = args["alpha"]
 
     alignment = read_alignment(alignmentfile)
-    seqlist = create_ali_list(alignment, structures_folder, sort)
+    seqlist = create_ali_list(alignment, structures_folder, sort, alirange)
+
+    if alirange != 'all':
+        strip_position = (int(alirange.split(':')[0]) -1,
+                          int(alirange.split(':')[1]) )
+    else:
+        strip_position = (0,0)
 
     (data_matrix,
      labels_lines,
      data_annot,
-     data_positions) = prepare_data(seqlist, chunksize, interspace, tickPosition)
+     data_positions) = prepare_data(seqlist, chunksize, interspace, tickPosition,strip_position)
 
     print("Generating Graphs.. Please wait...")
     generate_graph(data_matrix=data_matrix,
@@ -425,7 +479,8 @@ def engine():
                    output=output,
                    color=color,
                    alpha=alpha,
-                   fontstyle=fontstyle)
+                   fontstyle=fontstyle,
+                   alirange=alirange)
 
     print(f"> Done. Check {output}")
 
