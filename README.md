@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/373582257.svg)](https://zenodo.org/badge/latestdoi/373582257)
+
 # colorMSAwithSSE
 Generate an image from a multiple sequence alignment (MSA) colored by the secondary structures elements (SSE)
 
